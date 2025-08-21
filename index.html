@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wake-up Light</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #sunrise-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 10;
+            display: none;
+            background: #000000;
+        }
+
+        #sunrise-screen.active {
+            display: block;
+        }
+
+        .sunrise-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+        }
+
+        #layer-1 {
+            background: radial-gradient(circle at center, #331a00 0%, #1a0d00 50%, #000000 100%);
+        }
+
+        #layer-2 {
+            background: radial-gradient(circle at center, #662200 0%, #3d1500 50%, #1a0800 100%);
+        }
+
+        #layer-3 {
+            background: radial-gradient(circle at center, #cc4400 0%, #804000 50%, #2d1500 100%);
+        }
+
+        #layer-4 {
+            background: radial-gradient(circle at center, #ff6600 0%, #ff4400 50%, #cc2200 100%);
+        }
+
+        #layer-5 {
+            background: radial-gradient(circle at center, #ffffff 0%, #ffdd00 50%, #ffaa00 100%);
+        }
+
+        @keyframes sunrise-layer-1 {
+            0% { opacity: 0; }
+            25% { opacity: 1; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes sunrise-layer-2 {
+            0% { opacity: 0; }
+            15% { opacity: 0; }
+            45% { opacity: 1; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes sunrise-layer-3 {
+            0% { opacity: 0; }
+            35% { opacity: 0; }
+            65% { opacity: 1; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes sunrise-layer-4 {
+            0% { opacity: 0; }
+            55% { opacity: 0; }
+            85% { opacity: 1; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes sunrise-layer-5 {
+            0% { opacity: 0; }
+            75% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .sunrise-active #layer-1 {
+            animation: sunrise-layer-1 var(--duration, 10s) ease-in-out forwards;
+        }
+
+        .sunrise-active #layer-2 {
+            animation: sunrise-layer-2 var(--duration, 10s) ease-in-out forwards;
+        }
+
+        .sunrise-active #layer-3 {
+            animation: sunrise-layer-3 var(--duration, 10s) ease-in-out forwards;
+        }
+
+        .sunrise-active #layer-4 {
+            animation: sunrise-layer-4 var(--duration, 10s) ease-in-out forwards;
+        }
+
+        .sunrise-active #layer-5 {
+            animation: sunrise-layer-5 var(--duration, 10s) ease-in-out forwards;
+        }
+
+        #control-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 15;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #ffa500;
+        }
+
+        .control-group {
+            margin: 10px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: #ccc;
+        }
+
+        input[type="time"] {
+            font-size: 1.5em;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            width: 200px;
+            text-align: center;
+        }
+
+        input[type="range"] {
+            width: 250px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #d97706;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #d97706;
+            cursor: pointer;
+            border: none;
+        }
+
+        input[type="range"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        input[type="range"]:disabled::-webkit-slider-thumb {
+            cursor: not-allowed;
+        }
+
+        input[type="range"]:disabled::-moz-range-thumb {
+            cursor: not-allowed;
+        }
+
+        button {
+            font-size: 1.2em;
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        .btn-primary {
+            background: #d97706;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #f59e0b;
+        }
+
+        .btn-secondary {
+            background: #92400e;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #b45309;
+        }
+
+        .btn-stop {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-stop:hover {
+            background: #ef4444;
+        }
+
+        #status {
+            margin-top: 10px;
+            font-size: 1.1em;
+            color: #ffa500;
+            min-height: 25px;
+        }
+
+        #click-hint {
+            color: #999;
+            opacity: 0.7;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        #time-display {
+            font-size: 3em;
+            color: #fff;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .range-value {
+            color: #ffa500;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="sunrise-screen">
+        <div class="sunrise-layer" id="layer-1"></div>
+        <div class="sunrise-layer" id="layer-2"></div>
+        <div class="sunrise-layer" id="layer-3"></div>
+        <div class="sunrise-layer" id="layer-4"></div>
+        <div class="sunrise-layer" id="layer-5"></div>
+    </div>
+    
+    <div id="control-panel">
+        <div id="time-display"></div>
+        
+        <div class="control-group">
+            <label for="alarm-time">Wake-up time:</label>
+            <input type="time" id="alarm-time" value="07:00">
+        </div>
+        
+        <div class="control-group">
+            <label for="duration">Sunrise duration: <span id="duration-value" class="range-value">30 min</span></label>
+            <input type="range" id="duration" min="15" max="45" value="30" step="5">
+        </div>
+        
+        <div class="control-group">
+            <button id="set-alarm" class="btn-primary">Set alarm</button>
+            <button id="test-sunrise" class="btn-secondary">Test sunrise</button>
+            <button id="stop-alarm" class="btn-stop hidden">Stop</button>
+        </div>
+        
+        <div id="status">
+            <div id="click-hint">Click anywhere to hide panel</div>
+        </div>
+    </div>
+
+    <script>
+        let alarmTimeout = null;
+        let sunriseInterval = null;
+        let testTimeout = null;
+        let sunriseEndTimeout = null;
+        let isAlarmSet = false;
+        let isRunning = false;
+        let sunriseScreen = document.getElementById('sunrise-screen');
+        const controlPanel = document.getElementById('control-panel');
+        const alarmTimeInput = document.getElementById('alarm-time');
+        const durationSlider = document.getElementById('duration');
+        const durationValue = document.getElementById('duration-value');
+        const setAlarmBtn = document.getElementById('set-alarm');
+        const testSunriseBtn = document.getElementById('test-sunrise');
+        const stopAlarmBtn = document.getElementById('stop-alarm');
+        const statusDiv = document.getElementById('status');
+        let clickHint = document.getElementById('click-hint');
+        const timeDisplay = document.getElementById('time-display');
+
+        function updateTimeDisplay() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            timeDisplay.textContent = timeString;
+        }
+
+
+        function updateDurationDisplay() {
+            durationValue.textContent = durationSlider.value + ' min';
+        }
+
+        function updateStatus(text) {
+            if (text) {
+                statusDiv.innerHTML = text;
+                clickHint.style.display = 'none';
+            } else {
+                statusDiv.innerHTML = '<div id="click-hint">Click anywhere to hide panel</div>';
+                clickHint = document.getElementById('click-hint');
+            }
+        }
+
+        function loadSettings() {
+            const savedTime = localStorage.getItem('alarmTime');
+            const savedDuration = localStorage.getItem('sunriseDuration');
+            
+            if (savedTime) {
+                alarmTimeInput.value = savedTime;
+            }
+            if (savedDuration) {
+                durationSlider.value = savedDuration;
+                updateDurationDisplay();
+            }
+        }
+
+        function saveSettings() {
+            localStorage.setItem('alarmTime', alarmTimeInput.value);
+            localStorage.setItem('sunriseDuration', durationSlider.value);
+        }
+
+        function resetAnimation() {
+            const newSunriseScreen = sunriseScreen.cloneNode(true);
+            sunriseScreen.parentNode.replaceChild(newSunriseScreen, sunriseScreen);
+            sunriseScreen = newSunriseScreen;
+        }
+
+        function startSunrise(durationMinutes = 30, isTest = false) {
+            if (isRunning) return;
+            
+            isRunning = true;
+            resetAnimation();
+            
+            sunriseScreen.classList.add('active');
+            stopAlarmBtn.classList.remove('hidden');
+            
+            sunriseScreen.style.setProperty('--duration', `${durationMinutes * 60}s`);
+            sunriseScreen.classList.add('sunrise-active');
+            
+            sunriseEndTimeout = setTimeout(() => {
+                if (!isTest) {
+                    updateStatus('Good morning! Time to wake up!');
+                }
+            }, durationMinutes * 60 * 1000);
+        }
+
+        function stopSunrise() {
+            isRunning = false;
+            isAlarmSet = false;
+            clearTimeout(alarmTimeout);
+            clearTimeout(testTimeout);
+            clearTimeout(sunriseEndTimeout);
+            alarmTimeout = null;
+            testTimeout = null;
+            sunriseEndTimeout = null;
+            
+            sunriseScreen.classList.remove('active', 'sunrise-active');
+            stopAlarmBtn.classList.add('hidden');
+            
+            testSunriseBtn.textContent = 'Test sunrise';
+            testSunriseBtn.classList.remove('btn-stop');
+            testSunriseBtn.classList.add('btn-secondary');
+            
+            setAlarmBtn.textContent = 'Set alarm';
+            setAlarmBtn.classList.remove('btn-stop');
+            setAlarmBtn.classList.add('btn-primary');
+            
+            durationSlider.disabled = false;
+            
+            updateStatus('');
+        }
+
+        function setAlarm() {
+            if (isRunning) {
+                stopSunrise();
+            } else if (isAlarmSet) {
+                clearTimeout(alarmTimeout);
+                alarmTimeout = null;
+                isAlarmSet = false;
+                
+                setAlarmBtn.textContent = 'Set alarm';
+                setAlarmBtn.classList.remove('btn-stop');
+                setAlarmBtn.classList.add('btn-primary');
+                
+                durationSlider.disabled = false;
+                
+                updateStatus('');
+                return;
+            }
+            
+            const alarmTime = alarmTimeInput.value;
+            const duration = parseInt(durationSlider.value);
+            
+            if (!alarmTime) {
+                updateStatus('Please set the wake-up time');
+                return;
+            }
+            
+            const now = new Date();
+            const alarm = new Date();
+            const [hours, minutes] = alarmTime.split(':');
+            
+            alarm.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            
+            if (alarm <= now) {
+                alarm.setDate(alarm.getDate() + 1);
+            }
+            
+            const sunriseStart = new Date(alarm.getTime() - duration * 60 * 1000);
+            const timeToSunrise = sunriseStart.getTime() - now.getTime();
+            
+            if (timeToSunrise < 0) {
+                updateStatus('Sunrise time has passed. Please set time for tomorrow.');
+                return;
+            }
+            
+            isAlarmSet = true;
+            alarmTimeout = setTimeout(() => {
+                startSunrise(duration, false);
+            }, timeToSunrise);
+            
+            setAlarmBtn.textContent = 'Stop';
+            setAlarmBtn.classList.remove('btn-primary');
+            setAlarmBtn.classList.add('btn-stop');
+            
+            durationSlider.disabled = true;
+            
+            const sunriseTimeString = sunriseStart.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false
+            });
+            
+            updateStatus(`Alarm set for ${alarmTime} (sunrise starts at ${sunriseTimeString})`);
+            saveSettings();
+        }
+
+        function testSunrise() {
+            if (isRunning) {
+                stopSunrise();
+                return;
+            }
+            
+            if (isAlarmSet) {
+                isAlarmSet = false;
+                setAlarmBtn.textContent = 'Set alarm';
+                setAlarmBtn.classList.remove('btn-stop');
+                setAlarmBtn.classList.add('btn-primary');
+            }
+            
+            clearTimeout(alarmTimeout);
+            alarmTimeout = null;
+            
+            isRunning = true;
+            resetAnimation();
+            
+            testSunriseBtn.textContent = 'Stop';
+            testSunriseBtn.classList.remove('btn-secondary');
+            testSunriseBtn.classList.add('btn-stop');
+            
+            durationSlider.disabled = true;
+            
+            updateStatus('Testing sunrise (10 seconds)');
+            
+            sunriseScreen.classList.add('active');
+            
+            sunriseScreen.style.setProperty('--duration', '10s');
+            sunriseScreen.classList.add('sunrise-active');
+            
+            testTimeout = setTimeout(() => {
+                stopSunrise();
+                
+                if (isAlarmSet) {
+                    updateStatus(`Alarm set for ${alarmTimeInput.value}`);
+                }
+            }, 10000);
+        }
+
+        setAlarmBtn.addEventListener('click', setAlarm);
+        testSunriseBtn.addEventListener('click', testSunrise);
+        stopAlarmBtn.addEventListener('click', stopSunrise);
+        durationSlider.addEventListener('input', function() {
+            updateDurationDisplay();
+            saveSettings();
+        });
+
+        updateTimeDisplay();
+        setInterval(updateTimeDisplay, 1000);
+        updateDurationDisplay();
+        loadSettings();
+
+        controlPanel.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!controlPanel.contains(e.target) && !controlPanel.classList.contains('hidden')) {
+                controlPanel.classList.add('hidden');
+            } else if (controlPanel.classList.contains('hidden')) {
+                controlPanel.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
