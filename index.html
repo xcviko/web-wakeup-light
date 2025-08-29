@@ -292,6 +292,7 @@
             <button id="set-alarm" class="btn-primary">Set alarm</button>
             <button id="test-sunrise" class="btn-secondary">Test sunrise</button>
             <button id="stop-alarm" class="btn-stop hidden">Stop</button>
+            <button id="fullscreen-btn" class="btn-secondary">Fullscreen</button>
         </div>
         
         <div id="status">
@@ -314,6 +315,7 @@
         const setAlarmBtn = document.getElementById('set-alarm');
         const testSunriseBtn = document.getElementById('test-sunrise');
         const stopAlarmBtn = document.getElementById('stop-alarm');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
         const statusDiv = document.getElementById('status');
         let clickHint = document.getElementById('click-hint');
         const timeDisplay = document.getElementById('time-display');
@@ -519,9 +521,30 @@
             }, 10000);
         }
 
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+                fullscreenBtn.textContent = 'Exit fullscreen';
+            } else {
+                document.exitFullscreen();
+                fullscreenBtn.textContent = 'Fullscreen';
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                fullscreenBtn.textContent = 'Exit fullscreen';
+            } else {
+                fullscreenBtn.textContent = 'Fullscreen';
+            }
+        });
+
         setAlarmBtn.addEventListener('click', setAlarm);
         testSunriseBtn.addEventListener('click', testSunrise);
         stopAlarmBtn.addEventListener('click', stopSunrise);
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
         durationSlider.addEventListener('input', function() {
             updateDurationDisplay();
             saveSettings();
